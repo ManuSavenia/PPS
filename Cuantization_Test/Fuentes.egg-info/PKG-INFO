@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: Fuentes
+Version: 0.1
+Summary: Package for plotting decision regions and data manipulation
+Author: John Doe
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: pandas
+Requires-Dist: IPython
+Requires-Dist: tensorflow
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: summary

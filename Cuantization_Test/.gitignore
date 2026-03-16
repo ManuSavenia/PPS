@@ -1,0 +1,10 @@
+*.zip
+*.png
+env/
+# (opcional) Ignorar otros archivos grandes
+*.rar
+*.tar
+*.tar.gz
+
+*.7z
+
