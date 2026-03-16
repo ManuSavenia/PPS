@@ -1,5 +1,6 @@
 *.zip
 *.png
+*.pdf
 env/
 # (opcional) Ignorar otros archivos grandes
 *.rar

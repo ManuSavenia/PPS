@@ -42,6 +42,24 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+## Descarga del dataset de imagenes (obligatorio)
+
+Este repositorio no incluye todas las imagenes del dataset para evitar un repositorio demasiado pesado.
+
+Fuente oficial:
+- https://www.kaggle.com/koryakinp/fingers
+
+Pasos sugeridos:
+1. Descargar el dataset desde Kaggle (ZIP).
+2. Extraer el contenido localmente.
+3. Copiar las carpetas de imagenes dentro de `Imagenes/Fingers/` respetando la estructura de train/test por clase (`0` a `5`).
+
+La estructura esperada es:
+- `Imagenes/Fingers/train/0 ... 5`
+- `Imagenes/Fingers/test/0 ... 5`
+
+Si no estan estas carpetas con imagenes, el notebook no podra regenerar correctamente los CSV.
+
 ## Uso rapido
 
 ### Opcion A: Notebook (recomendado)
@@ -85,3 +103,8 @@ Genera:
 - Se usa cuantizacion simetrica signed de 8 bits: rango entero `[-127, 127]`.
 - La cuantizacion puede degradar metricas, especialmente cuando la salida se mantiene cuantizada en enteros.
 - En el notebook se comparan ambos escenarios para mostrar esa diferencia de forma explicita.
+
+## Notas de Git/GitHub
+
+- El entorno virtual local debe quedar fuera de control de versiones (`env/` esta ignorado en `.gitignore`).
+- Si se suben librerias pesadas del entorno virtual, GitHub puede rechazar el push por limite de tamano de archivo.
