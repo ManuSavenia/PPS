@@ -11,7 +11,7 @@ Proyecto para:
 - `Data_Sets/`: CSV de train/test y resultados de comparacion.
 - `Imagenes/Fingers/`: imagenes originales del dataset.
 - `Models/`: modelo base y modelos cuantizados (`.tflite`).
-- `Test/10_Fingers.ipynb`: notebook principal del flujo completo.
+- `Test/Test_Fingers.ipynb`: notebook principal del flujo completo.
 - `requirements.txt`: dependencias para ejecutar notebook y scripts.
 - `setup.py`: empaquetado del modulo `Fuentes`.
 
@@ -76,15 +76,77 @@ Flujo del notebook:
    - Pipeline con in/out quantized.
 5. Export de modelos int8 reales a TFLite.
 
-### Opcion B: Regenerar CSV de entradas cuantizadas int8
+## Pipeline completo de `Test/Test_Fingers.ipynb` 
 
-```bash
-python Fuentes/quantize_signed_symmetric_inputs.py
-```
+El notebook esta dividido en dos bloques para evitar recalculo innecesario:
 
-Genera:
-- `Data_Sets/fingers_train_quant8_signed_symmetric.csv`
-- `Data_Sets/fingers_test_quant8_signed_symmetric.csv`
+### PARTE 1 - PREPARACION (ejecutar una vez)
+
+1. **Inspeccion inicial del dataset**
+  - Carga una imagen ejemplo y muestra propiedades de `regionprops`.
+
+2. **Extraccion de caracteristicas y generacion de CSV base**
+  - Recorre `Imagenes/Fingers/train` y `Imagenes/Fingers/test`.
+  - Extrae features geometricas normalizadas.
+  - Genera:
+    - `Data_Sets/fingers_train.csv`
+    - `Data_Sets/fingers_test.csv`
+
+3. **Preparacion de datos para entrenamiento**
+  - Carga `fingers_train.csv`.
+  - Separa features/etiquetas.
+  - Aplica split train/val.
+  - Ajusta y guarda el normalizador:
+    - `Data_Sets/normalizer.pkl`
+
+4. **Entrenamiento del modelo base (float)**
+  - Entrena MLP con early stopping.
+  - Guarda:
+    - `Models/fingers_model_no_quantization.h5`
+
+5. **Cuantizacion de pesos y export de modelos**
+  - Construye dos variantes con cuantizacion simetrica signed:
+    - por capa
+    - por neurona
+  - Guarda modelos Keras (carga rapida para evaluacion):
+    - `Models/fingers_model_q_signed_symmetric_per_layer.h5`
+    - `Models/fingers_model_q_signed_symmetric_per_neuron.h5`
+  - Exporta modelos int8 reales a TFLite:
+    - `Models/fingers_model_q_signed_symmetric_per_layer_int8.tflite`
+    - `Models/fingers_model_q_signed_symmetric_per_neuron_int8.tflite`
+
+6. **Cuantizacion de entradas y metadata exacta**
+  - Cuantiza los CSV de entrada en el dominio correcto (features normalizadas).
+  - Genera:
+    - `Data_Sets/fingers_train_quant8_signed_symmetric.csv`
+    - `Data_Sets/fingers_test_quant8_signed_symmetric.csv`
+  - Guarda metadata exacta para reproducir dequantizacion en evaluacion:
+    - `Data_Sets/quantization_metadata_signed_symmetric.npz`
+
+### PARTE 2 - EVALUACION 
+
+1. **Carga de artefactos precomputados**
+  - Modelos base y cuantizados (`.h5`).
+  - Normalizador (`normalizer.pkl`).
+  - CSV cuantizados precomputados.
+  - Metadata de cuantizacion exacta (`.npz`).
+
+2. **Evaluacion baseline**
+  - Evalua el modelo float sobre datos float normalizados.
+
+3. **Evaluacion cuantizada sin recalcular cuantizacion**
+  - Pipeline I/O quantized: usa directamente los CSV cuantizados.
+  - Pipeline I/O dequantized: dequantiza usando las escalas exactas guardadas.
+
+4. **Analisis de error quantized vs dequantized**
+  - Calcula MAE, MSE, error maximo y agreement/disagreement top-1.
+
+5. **Persistencia de resultados**
+  - Tabla comparativa general:
+    - `Data_Sets/quantization_comparison_signed_symmetric.csv`
+  - Analisis de error:
+    - `Data_Sets/quantized_vs_dequantized_error_signed_symmetric.csv`
+
 
 ## Archivos de salida importantes
 
@@ -95,8 +157,18 @@ Genera:
   - `Models/fingers_model_q_signed_symmetric_per_layer_int8.tflite`
   - `Models/fingers_model_q_signed_symmetric_per_neuron_int8.tflite`
 
+- Modelos cuantizados Keras (para evaluacion rapida):
+  - `Models/fingers_model_q_signed_symmetric_per_layer.h5`
+  - `Models/fingers_model_q_signed_symmetric_per_neuron.h5`
+
 - Comparacion de metricas:
   - `Data_Sets/quantization_comparison_signed_symmetric.csv`
+
+- Error entre pipelines quantized/dequantized:
+  - `Data_Sets/quantized_vs_dequantized_error_signed_symmetric.csv`
+
+- Metadata exacta de cuantizacion (escalas):
+  - `Data_Sets/quantization_metadata_signed_symmetric.npz`
 
 ## Notas de cuantizacion
 

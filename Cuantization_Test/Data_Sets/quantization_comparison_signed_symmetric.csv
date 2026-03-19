@@ -1,11 +1,11 @@
 Modelo,Pipeline,Split,Accuracy,F1_macro
-Baseline (sin cuantización),float,Train,0.9941662615459407,0.9941336910068698
-Baseline (sin cuantización),float,Val,0.9952777777777778,0.9953836330626024
-Q simétrica signed (pesos por capa),in/out dequantized,Train,0.9938884644766998,0.9938537990430835
-Q simétrica signed (pesos por capa),in/out dequantized,Val,0.9955555555555555,0.9956516045353604
-Q simétrica signed (pesos por capa),in/out quantized,Train,0.6356691436905341,0.5494235310315102
-Q simétrica signed (pesos por capa),in/out quantized,Val,0.6327777777777778,0.5491458461842514
-Q simétrica signed (pesos por neurona),in/out dequantized,Train,0.9940273630113202,0.9939941388157276
-Q simétrica signed (pesos por neurona),in/out dequantized,Val,0.9955555555555555,0.9956516045353604
-Q simétrica signed (pesos por neurona),in/out quantized,Train,0.6362247378290159,0.5502204710770681
-Q simétrica signed (pesos por neurona),in/out quantized,Val,0.6338888888888888,0.5508836756754477
+Baseline,float,Train,0.9929161747343566,0.9928869106999921
+Baseline,float,Val,0.9938888888888889,0.9940100792085831
+Q per-layer,I/O dequant (from CSV),TrainQ,0.9930551697316518,0.9930595204253475
+Q per-layer,I/O dequant (from CSV),TestQ,0.9936111111111111,0.9936147121384451
+Q per-layer,I/O quant (from CSV),TrainQ,0.5954219678871049,0.4910954648583887
+Q per-layer,I/O quant (from CSV),TestQ,0.5977777777777777,0.49156858585518526
+Q per-neuron,I/O dequant (from CSV),TrainQ,0.9929440524473582,0.992948635858102
+Q per-neuron,I/O dequant (from CSV),TestQ,0.9933333333333333,0.9933372422562853
+Q per-neuron,I/O quant (from CSV),TrainQ,0.5970887271515084,0.49258889981799153
+Q per-neuron,I/O quant (from CSV),TestQ,0.5994444444444444,0.49309649251484194
