@@ -1,0 +1,1 @@
+Modelo,Particion,Accuracy_C,Accuracy_Python,AbsDiff\nQ por capa,EntrenamientoQ,0.99305516,0.99305516,0.00000000\nQ por capa,PruebaQ,0.99361110,0.99361110,0.00000000\nQ por neurona,EntrenamientoQ,0.99299961,0.99294406,0.00005555\nQ por neurona,PruebaQ,0.99305558,0.99333334,0.00027776\n

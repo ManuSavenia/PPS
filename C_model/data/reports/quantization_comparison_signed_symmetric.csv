@@ -1,0 +1,11 @@
+Modelo,Flujo,Particion,Exactitud,F1_macro
+Modelo base,coma flotante,Entrenamiento,0.9929161747343566,0.9928869106999921
+Modelo base,coma flotante,Validacion,0.9938888888888889,0.9940100792085831
+Q por capa,I/O dequant (desde CSV),EntrenamientoQ,0.9930551697316518,0.9930595204253475
+Q por capa,I/O dequant (desde CSV),PruebaQ,0.9936111111111111,0.9936147121384451
+Q por capa,I/O quant (desde CSV),EntrenamientoQ,0.5954219678871049,0.4910954648583887
+Q por capa,I/O quant (desde CSV),PruebaQ,0.5977777777777777,0.49156858585518526
+Q por neurona,I/O dequant (desde CSV),EntrenamientoQ,0.9929440524473582,0.992948635858102
+Q por neurona,I/O dequant (desde CSV),PruebaQ,0.9933333333333333,0.9933372422562853
+Q por neurona,I/O quant (desde CSV),EntrenamientoQ,0.5970887271515084,0.49258889981799153
+Q por neurona,I/O quant (desde CSV),PruebaQ,0.5994444444444444,0.49309649251484194
