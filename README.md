@@ -1,7 +1,9 @@
-# PPS
+# PPS - Cuantización de modelos Neuronales
 
 Este repositorio contiene avances y pruebas de la Practica Profesional Supervisada
 realizada en la Facultad Nacional de La Plata (UNLP).
+Se busca el pasaje de modelos neuronales en Python a C, para su ejecucion en MCU's y MTU's, utilizando
+Cuantización simetrica con signo para ahorrar espacio y tiempo de ejecucion al evitar usar numeros de punto flotante.
 
 ## Proyectos principales
 
