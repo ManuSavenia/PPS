@@ -8,7 +8,7 @@ Proyecto para:
 ## Estructura
 
 - `Fuentes/`: modulos auxiliares.
-- `Data_Sets/`: CSV de train/test y resultados de comparacion.
+- `Data_Sets/`: CSV de train/test, resultados de comparacion de error y accuracy, datos de normalizacion, y metadata.
 - `Imagenes/Fingers/`: imagenes originales del dataset.
 - `Models/`: modelo base y modelos cuantizados (`.tflite`).
 - `Test/Test_Fingers.ipynb`: notebook principal del flujo completo.
