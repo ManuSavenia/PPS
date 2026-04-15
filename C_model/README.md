@@ -15,6 +15,20 @@ Pipeline de inferencia en C para los modelos cuantizados del proyecto Fingers.
 - `models/`: `main.c` con inferencia de modelos `per-layer` y `per-neuron`, evaluación de accuracy y comparación con referencia Python.
 - `tools/`: script Python para exportar artefactos desde modelos Keras a `data/`.
 
+## Origen de los artefactos
+
+Los datos y modelos que consume `C_model/` se generan desde `Cuantization_Test/Test/Test_Fingers.ipynb` y quedan organizados en:
+
+- `Cuantization_Test/Data_Sets/raw/`
+- `Cuantization_Test/Data_Sets/quantized/`
+- `Cuantization_Test/Data_Sets/metadata/`
+- `Cuantization_Test/Data_Sets/reports/`
+- `Cuantization_Test/Models/base/`
+- `Cuantization_Test/Models/quantized_h5/`
+- `Cuantization_Test/Models/quantized_tflite/`
+- `Cuantization_Test/Models/repaired_h5/`
+- `Cuantization_Test/Models/repaired_tflite/`
+
 ## Activaciones implementadas
 
 - Capa oculta: `tanh`
@@ -49,6 +63,10 @@ Esto genera/copia en `data/`:
 - `scales/weight_scales_per_neuron_b1.csv`
 - `metadata/quantization_metadata_c.json`
 - `reports/quantization_comparison_signed_symmetric.csv` (si existe en `Cuantization_Test/Data_Sets/`)
+- `reports/quantized_vs_dequantized_error_signed_symmetric.csv` (si existe en `Cuantization_Test/Data_Sets/reports/`)
+- `reports/layerwise_quantized_vs_dequantized_analysis.csv` (si existe)
+- `reports/diagnostic_accuracy_layer_vs_neuron.csv` (si existe)
+- `reports/quantized_accuracy_repair_best.csv` y validacion TFLite asociada (si existen)
 
 Nota:
 El script `tools/export_c_assets.py` delega en la utilidad compartida de nivel superior `../utility/export_c_assets.py` para evitar duplicación de lógica.

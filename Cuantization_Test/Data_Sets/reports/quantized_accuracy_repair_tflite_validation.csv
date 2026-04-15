@@ -1,0 +1,3 @@
+Modelo,Baseline test acc (repair search),Best emulated test acc,TFLite int8 test acc,TFLite int8 test f1,Delta TFLite vs baseline,Delta TFLite vs emulated_best,TFLite model path,Input scale,Input zero_point,Output scale,Output zero_point
+Q por capa,0.5977777777777777,0.9941666666666666,0.9930555555555556,0.9930630697437121,0.39527777777777784,-0.0011111111111110628,../Models/repaired_tflite/fingers_model_q_signed_symmetric_per_layer_repaired_best_int8.tflite,0.025098025798797607,25,0.00390625,-128
+Q por neurona,0.5994444444444444,0.9936111111111112,0.9936111111111111,0.9936150202269646,0.39416666666666667,-1.1102230246251565e-16,../Models/repaired_tflite/fingers_model_q_signed_symmetric_per_neuron_repaired_best_int8.tflite,0.025098025798797607,25,0.00390625,-128

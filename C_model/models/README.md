@@ -47,6 +47,8 @@ Desde `../data/`:
 - `inputs/input_scale_test.csv`
 - Pesos y escalas en subcarpetas `weights/` y `scales/`.
 
+Estos archivos son producidos por el pipeline Python reorganizado en `Cuantization_Test/`, que ahora guarda artefactos en `Data_Sets/` y `Models/` por tipo.
+
 ## Salidas
 
 - Impresion por consola de accuracies y diferencias.

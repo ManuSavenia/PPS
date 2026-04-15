@@ -1,0 +1,9 @@
+Modelo,Layer,Tensor,Mode,Shape,LevelsUsed,SaturationCount
+Q por capa,dense_6,kernel,per_layer,"(6, 8)",43,1
+Q por capa,dense_6,bias,per_layer,"(8,)",8,1
+Q por capa,dense_7,kernel,per_layer,"(8, 6)",42,1
+Q por capa,dense_7,bias,per_layer,"(6,)",6,1
+Q por neurona,dense_6,kernel,per_neuron,"(6, 8)",38,8
+Q por neurona,dense_6,bias,per_neuron,"(8,)",8,1
+Q por neurona,dense_7,kernel,per_neuron,"(8, 6)",40,6
+Q por neurona,dense_7,bias,per_neuron,"(6,)",6,1

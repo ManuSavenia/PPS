@@ -123,7 +123,7 @@ static int load_model_per_neuron(QModel *m, const char *data_dir)
     return 0;
 }
 
-static void infer_one(
+ static void infer_one(
     const QModel *m,
     const int32_t *x_q,
     const float *input_scales,

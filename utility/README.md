@@ -174,6 +174,48 @@ Convierte modelo Keras a formato TensorFlow Lite int8 usando conjunto de datos r
 
 ---
 
+## Diagnosticos y Reparacion
+
+### `layerwise_quantized_debugging.py`
+**Función:** `layerwise_quantized_vs_dequantized_report(model, x_quantized, y_eval, scales, dataset_name="dataset")`
+
+Compara, capa por capa, las salidas del mismo modelo cuando la entrada se mantiene cuantizada versus cuando se de-cuantiza antes de la inferencia.
+
+**Propósito:** detectar en qué capa comienza la deriva numérica que termina degradando la predicción final.
+
+**Retorna:**
+- `report`: `DataFrame` con MAE, RMSE, error máximo, error relativo, similitud coseno y agreement final.
+- `summary`: diccionario con accuracy cuantizado, accuracy de-cuantizado y agreement final.
+
+### `quantized_model_diagnostics.py`
+**Funciones:** `build_accuracy_comparison(...)`, `build_weight_quantization_error_report(...)`, `build_deployed_levels_report(...)`
+
+Agrupa diagnósticos para comparar `per_layer` contra `per_neuron`.
+
+**Propósito:** medir el impacto real de cada esquema sobre accuracy, error de pesos, niveles usados y saturación.
+
+### `quantized_clipping_analysis.py`
+**Funciones:** `build_clipped_model_from_source(...)`, `count_levels(...)`, `evaluate_clipping_sweep(...)`
+
+Explora recorte de outliers en pesos cuantizados y mide su efecto sobre accuracy y saturación.
+
+### `quantized_histogram_reports.py`
+**Función:** `generate_quantized_histogram_reports(model_name, model_obj, mode, out_dir, bits=8)`
+
+Genera histogramas de pesos cuantizados por tensor, por neurona y globales.
+
+### `quantized_accuracy_repair.py`
+**Funciones:** `run_quantized_repair_search(...)`, `calibrate_activation_params(...)`, `predict_with_activation_quantization(...)`
+
+Busca mejoras de accuracy combinando clipping selectivo de pesos, calibración de activaciones y fake-quant de activaciones.
+
+### `evaluate_tflite_int8_from_csv.py`
+**Función:** `evaluate_tflite_int8_from_csv(tflite_model_path, x_q_eval, y_eval, scales)`
+
+Evalúa un modelo TFLite int8 real usando el intérprete y entradas reconstruidas desde CSV cuantizado.
+
+---
+
 ## Exportación C & Orquestación
 
 ### `export_c_assets.py`
@@ -341,6 +383,15 @@ Compara salidas del modelo entre pipelines de entrada cuantizado y dequantizado.
 ---
 
 ## Guía de Importación
+
+Los helpers nuevos más usados en el notebook principal son:
+
+- `utility.layerwise_quantized_debugging`
+- `utility.quantized_model_diagnostics`
+- `utility.quantized_clipping_analysis`
+- `utility.quantized_histogram_reports`
+- `utility.quantized_accuracy_repair`
+- `utility.evaluate_tflite_int8_from_csv`
 
 ### Importar en Celdas de Notebook
 

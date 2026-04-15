@@ -19,11 +19,22 @@ Pipeline de inferencia en C para los modelos cuantizados:
 
 Documentacion general:
 
-- [Cuantization_Test/README.md](Cuantization_Test/README.md): descripcion general del pipeline en Python, entrenamiento, cuantizacion y evaluaciones.
+- [Cuantization_Test/README.md](Cuantization_Test/README.md): descripcion del pipeline en Python, entrenamiento, cuantizacion, depuracion capa a capa, reparacion y validacion TFLite.
 - [C_model/README.md](C_model/README.md): vista global del pipeline de inferencia en C, estructura de datos y ejecucion.
-- [utility/README.md](utility/README.md): catalogo de funciones Python reutilizables para cuantizacion, exportacion y evaluacion.
+- [utility/README.md](utility/README.md): catalogo de funciones Python reutilizables para cuantizacion, exportacion, evaluacion y diagnosticos.
 
 Documentacion de componentes C:
 
 - [C_model/models/README.md](C_model/models/README.md): explicacion de `main.c`, flujo de inferencia, calculo de accuracy y comparacion contra Python.
 - [C_model/utility/README.md](C_model/utility/README.md): referencia de `utils.c` y `utils.h` con activaciones, dequantizacion y lectura de CSV.
+
+## Estructura actual del flujo Python
+
+- `Cuantization_Test/Data_Sets/raw/`: CSV base generados desde imagenes.
+- `Cuantization_Test/Data_Sets/quantized/`: CSV cuantizados de train/test.
+- `Cuantization_Test/Data_Sets/metadata/`: escalas y metadata de cuantizacion.
+- `Cuantization_Test/Data_Sets/reports/`: comparaciones, diagnosticos, reparacion y validacion TFLite.
+- `Cuantization_Test/Models/base/`: modelo float entrenado.
+- `Cuantization_Test/Models/quantized_h5/`: variantes cuantizadas para evaluacion rapida.
+- `Cuantization_Test/Models/quantized_tflite/`: variantes int8 reales.
+- `Cuantization_Test/Models/repaired_h5/` y `Cuantization_Test/Models/repaired_tflite/`: modelos reparados y su validacion final.

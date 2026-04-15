@@ -1,0 +1,3 @@
+Modelo,mode,baseline_test_acc,best_test_acc,delta_vs_baseline,best_clip_percentile,best_activation_scheme,best_activation_percentile,repaired_model_path
+Q por capa,per_layer,0.5977777777777777,0.9941666666666666,0.3963888888888889,99.5,symmetric,99.5,../Models/repaired_h5/fingers_model_q_signed_symmetric_per_layer_repaired_best.h5
+Q por neurona,per_neuron,0.5994444444444444,0.9936111111111111,0.39416666666666667,99.9,symmetric,99.5,../Models/repaired_h5/fingers_model_q_signed_symmetric_per_neuron_repaired_best.h5

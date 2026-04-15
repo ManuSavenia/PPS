@@ -35,6 +35,14 @@ Esta carpeta contiene utilidades compartidas usadas por el pipeline de inferenci
   - vector de labels (`int *`)
   - cantidad de muestras (`samples`)
 
+## Relacion con el pipeline Python
+
+Los CSV y metadatos consumidos por estas funciones se generan desde `Cuantization_Test/Data_Sets/` y `Cuantization_Test/Models/`.
+En particular, los artefactos relevantes ahora viven en subcarpetas organizadas:
+
+- `Data_Sets/raw/`, `Data_Sets/quantized/`, `Data_Sets/metadata/`, `Data_Sets/reports/`
+- `Models/base/`, `Models/quantized_h5/`, `Models/quantized_tflite/`, `Models/repaired_h5/`, `Models/repaired_tflite/`
+
 ## Detalles de robustez
 
 - Salta lineas vacias en los CSV.
