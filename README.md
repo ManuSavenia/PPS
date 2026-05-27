@@ -38,3 +38,29 @@ Documentacion de componentes C:
 - `Cuantization_Test/Models/quantized_h5/`: variantes cuantizadas para evaluacion rapida.
 - `Cuantization_Test/Models/quantized_tflite/`: variantes int8 reales.
 - `Cuantization_Test/Models/repaired_h5/` y `Cuantization_Test/Models/repaired_tflite/`: modelos reparados y su validacion final.
+
+## Exportacion a EmbedIA FULL_QUANT8
+
+Se agrego y valio el flujo de exportacion del modelo float de PPS hacia un proyecto EmbedIA FULL_QUANT8 usando ejemplos crudos en CSV.
+
+Archivos cambiados en PPS:
+
+- `utility/export_embedia_project.py`: crea el proyecto EmbedIA, exporta la muestra CSV cruda y sincroniza el runtime FULL_QUANT8 reparado dentro del proyecto generado.
+- `utility/README.md`: documenta la nueva utilidad de exportacion.
+- `README.md`: este resumen de cambios.
+
+Archivos cambiados en EmbedIA para que FULL_QUANT8 quede autocontenido:
+
+- `embedia/libraries/mcu/generic/full_quant8/quant8.h`
+- `embedia/libraries/mcu/generic/full_quant8/realtype.h`
+- `embedia/libraries/mcu/generic/full_quant8/common.h`
+- `embedia/libraries/mcu/generic/full_quant8/common.c`
+- `embedia/libraries/mcu/generic/full_quant8/neural_net.c`
+- `embedia/libraries/mcu/generic/full_quant8/neural_net/_types.h`
+- `embedia/libraries/mcu/template/common.c`
+
+Validacion realizada:
+
+- Se regenero `EmbedIA_exports/fingers_full_quant8`.
+- El proyecto generado compilo correctamente.
+- Se ejecuto el binario generado y completo las pruebas de ejemplo incluidas en `example_file.h`.

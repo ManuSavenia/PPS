@@ -1,0 +1,50 @@
+diff --git a/embedia/libraries/mcu/generic/full_quant8/realtype.h b/embedia/libraries/mcu/generic/full_quant8/realtype.h
+new file mode 100644
+index 0000000..486a937
+--- /dev/null
++++ b/embedia/libraries/mcu/generic/full_quant8/realtype.h
+@@ -0,0 +1,43 @@
++/* ### FULL_QUANT8: self-contained runtime type aliases without fixed-point dependency. ### */
++#ifndef REALTYPE_H
++#define REALTYPE_H
++
++#include <stdint.h>
++
++#include "quant8.h"
++
++#define DATA_TYPE_NAME "FULL_QUANT8"
++#define DATA_TYPE_IMPL DT_QUANT8
++
++typedef quant8 storage_t;
++typedef quant8 compute_t;
++typedef int32_t computex_t;
++
++#define ST2CO(s, qp) ((s))
++#define CO2ST(c, qp) ((c))
++#define CO2CX(c) ((int32_t)(c))
++#define CX2CO(cx) ((quant8)(cx))
++#define CX2CO_SAT(cx) ((quant8)(((cx) > Q_MAX) ? Q_MAX : (((cx) < Q_MIN) ? Q_MIN : (cx))))
++
++typedef compute_t real_t;
++typedef computex_t realx_t;
++
++#define REAL_ZERO 0
++#define REAL_ONE Q_SCALE
++#define REAL_TWO (2 * Q_SCALE)
++#define REAL_HALF (Q_SCALE / 2)
++#define REAL_MAX Q_MAX
++#define REAL_MIN Q_MIN
++
++#define REALX_ZERO 0
++#define REALX_ONE INT32_C(1)
++#define REALX_TWO INT32_C(2)
++#define REALX_HALF INT32_C(1)
++#define REALX_MAX INT32_MAX
++#define REALX_MIN INT32_MIN
++
++#define R2RX(val) CO2CX(val)
++#define RX2R(val) CX2CO(val)
++#define RX2R_SAT(val) CX2CO_SAT(val)
++
++#endif
+\ No newline at end of file

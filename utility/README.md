@@ -250,6 +250,29 @@ Orquesta la exportación de todos los pesos cuantizados, escalas y conjuntos de 
 **Retorna:** 
 - None (solo efectos secundarios)
 
+### `export_embedia_project.py`
+**Función:** `export_embedia_project(repo_root, embedia_root, output_folder, project_name, train_per_class, test_per_class)`
+
+Genera un proyecto EmbedIA sin tocar el framework y lo configura para `FULL_QUANT8` con micro `GENERIC`.
+
+**Propósito:** Exportar el modelo float entrenado de PPS junto con ejemplos conocidos de entrada, preservando una copia CSV de los datos crudos seleccionados y dejando que EmbedIA genere su proyecto C completo con sus propias plantillas.
+
+**Parámetros:**
+- `repo_root` (Path): raíz del workspace PPS.
+- `embedia_root` (Path): raíz del repositorio EmbedIA.
+- `output_folder` (Path): carpeta donde se escribirá el proyecto generado.
+- `project_name` (str): nombre del proyecto EmbedIA.
+- `train_per_class` (int): cantidad de muestras por clase desde el CSV de train.
+- `test_per_class` (int): cantidad de muestras por clase desde el CSV de test.
+
+**Efectos Secundarios:**
+- Crea una copia de los ejemplos elegidos en `{project_name}_raw_examples.csv`.
+- Genera el proyecto EmbedIA en `{output_folder}/{project_name}/`.
+- Usa `Cuantization_Test/Models/base/fingers_model_no_quantization.h5` y los CSV crudos normalizados de `Cuantization_Test/Data_Sets/raw/`.
+
+**Retorna:**
+- Diccionario con las rutas clave de exportación.
+
 ---
 
 ## Funciones de Evaluación
