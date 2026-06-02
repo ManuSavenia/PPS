@@ -48,6 +48,7 @@ Archivos cambiados en PPS:
 - `utility/export_embedia_project.py`: crea el proyecto EmbedIA, exporta la muestra CSV cruda y sincroniza el runtime FULL_QUANT8 reparado dentro del proyecto generado.
 - `utility/README.md`: documenta la nueva utilidad de exportacion.
 - `README.md`: este resumen de cambios.
+- `EmbedIA/README.md`: resumen de la exportacion FULL_QUANT8 y de la correccion de Dense/template que recupero la precision.
 
 Archivos cambiados en EmbedIA para que FULL_QUANT8 quede autocontenido:
 
@@ -64,3 +65,4 @@ Validacion realizada:
 - Se regenero `EmbedIA_exports/fingers_full_quant8`.
 - El proyecto generado compilo correctamente.
 - Se ejecuto el binario generado y completo las pruebas de ejemplo incluidas en `example_file.h`.
+- La exportacion grande volvió a ejecutarse con 3600 muestras y recupero 3575 aciertos sobre 3600 (99.31%) tras recalibrar Dense sobre la salida pre-activacion y corregir la plantilla `model.c`.

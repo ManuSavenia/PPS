@@ -20,7 +20,7 @@ El firmware C generado y las plantillas de EmbedIA se actualizaron para que la t
 - Los prototipos de activación para FULL_QUANT8 se actualizaron para aceptar `qparam_t`, de modo que las activaciones se evalúan en el dominio cuantizado correcto.
 - ReLU, ReLU6, tanh, sigmoid, softsign, softplus y softmax ahora son conscientes de `qparam` (qparam-aware).
 - Softmax ahora descuantiza, calcula probabilidades en punto flotante y vuelve a cuantizarlas usando los `qparams` de la capa.
-- La exportación de la capa Dense ahora preserva los parámetros de cuantización de pesos y la cuantización de salida.
+- La exportación de la capa Dense ahora calibra la salida a partir del tensor pre-activación y preserva los parámetros de cuantización de pesos y la cuantización de salida.
 - Las llamadas a funciones de activación generadas ahora pasan los `qparams` de salida cuando el modelo está cuantizado.
 - Se arregló la plantilla del modelo para que el generador pueda renderizar correctamente la fuente C.
 
@@ -52,17 +52,22 @@ El script se ejecutó con el conjunto completo de prueba para producir la export
 
 El proyecto generado se compiló y ejecutó correctamente contra el conjunto completo de prueba.
 
-- Muestras de prueba: 3600
-- Predicciones correctas: 3570
-- Precisión: 99.17%
+- Muestras solicitadas: 3600
+- Muestras evaluadas: 3606
+- Predicciones correctas: 3580
+- Precisión: 99.28%
 
 Consulte `large_scale_test_result.md` para el resumen guardado.
 
 ## Artefactos generados en esta carpeta
 
 - `fingers_full_quant8_large/` — proyecto EmbedIA generado
+- `fingers_full_quant8_large_repeat/` — proyecto regenerado para la validación repetida de 3600 muestras
 - `fingers_full_quant8_large_raw_examples.csv` — conjunto de ejemplos normalizados exportado
+- `fingers_full_quant8_large_repeat_raw_examples.csv` — conjunto de ejemplos normalizados exportado en la repetición
 - `large_scale_test_result.md` — informe con el resultado de precisión
+- `embedia/layers/dense/dense.py` — ajuste de calibración para usar la salida pre-activación en FULL_QUANT8
+- `embedia/libraries/model/model.c` — corrección de la plantilla para permitir el renderizado del generador
 
 ## Notas
 

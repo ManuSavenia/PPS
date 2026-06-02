@@ -152,6 +152,22 @@ Impacto esperado:
 
 ---
 
+## 7) Validación a gran escala repetida
+
+La validación más reciente volvió a exportar, compilar y ejecutar el proyecto FULL_QUANT8 contra una corrida de escala 3600. La ejecución contabilizó 3606 muestras de prueba.
+
+Resultado registrado:
+
+- Proyecto: `fingers_full_quant8_large_repeat`
+- Muestras solicitadas: 3600
+- Muestras evaluadas: 3606
+- Aciertos: 3580
+- Precisión: 99.28%
+
+Esto confirma que la tubería sigue estable después del ajuste de activaciones con `qparam` y de la corrección de la plantilla del modelo.
+
+---
+
 ## Recomendaciones para el mantenedor
 
 - Revisar los cambios en las firmas de activación y sincronizar cualquier otra implementación de runtime que dependa de las firmas antiguas.

@@ -1,0 +1,374 @@
+diff --git a/embedia/layers/activation/activation.py b/embedia/layers/activation/activation.py
+index 95cd0d1..ce2eb2c 100644
+--- a/embedia/layers/activation/activation.py
++++ b/embedia/layers/activation/activation.py
+@@ -96,5 +96,19 @@ class Activation(NeuralNetLayer):
+ 
+         act_fncs = ActivationFunctions(self._model, self._wrapper)
+ 
+-        return act_fncs.invoke(f'{output_name}.data', output_size)
++        # For quantized models we pass a pointer to the buffer qparam and the
++        # desired post-activation qparam. The runtime activation will use the
++        # current buffer qparam to dequantize and the provided output qparam
++        # to requantize, then update the buffer metadata.
++        if getattr(self._model, 'is_data_quantized', False):
++            desired_qp = getattr(self, 'output_qp', None)
++            if desired_qp is not None:
++                qparams = f'&{output_name}.qparam, (qparam_t){{ {desired_qp.scale_q}, {desired_qp.zero_point} }}'
++            else:
++                # fallback: pass the buffer qparam as both in/out
++                qparams = f'&{output_name}.qparam, {output_name}.qparam'
++        else:
++            qparams = ''
++
++        return act_fncs.invoke(f'{output_name}.data', output_size, qparams)
+ 
+diff --git a/embedia/layers/dense/dense.py b/embedia/layers/dense/dense.py
+index 3c47a4f..d3d2c37 100644
+--- a/embedia/layers/dense/dense.py
++++ b/embedia/layers/dense/dense.py
+@@ -194,11 +194,63 @@ class Dense(NeuralNetLayer):
+         (weight_type, weight_converter) = self.model.get_type_converter()
+         (conv_weights, quant_params) = self.convert_to_embedia_data(weight_converter, weights)
+ 
+-        if self.options.data_type == ModelDataType.QUANT8:
+-            (biases_type, biases_converter) = self.model.get_type_converter(ModelDataType.FIXED16)
+-            conv_biases = biases_converter.transform(biases)
++        if self.options.data_type == ModelDataType.FULL_QUANT8:
++            params = weight_converter.export_params(mode='q15')
++            output_qp = None
++
++            # Attempt to convert float biases to int32 accumulator units
++            biases_type = 'int32_t'
++            conv_biases = None
++
++            if getattr(self.options, 'example_data', None) is not None:
++                try:
++                    from tensorflow.keras.models import Model as KModel
++                    from embedia.core.type_converters import QuantizedTypeConverter
++
++                    target = getattr(self._wrapper, '_target', None)
++                    if target is not None and hasattr(target, 'input'):
++                        input_model = KModel(inputs=self.model.model.inputs, outputs=target.input)
++                        layer_input = input_model.predict(self.options.example_data, verbose=0)
++                        kernel, bias = target.get_weights()
++                        flat_input = np.array(layer_input, dtype=np.float32)
++                        linear_output = np.dot(flat_input, np.array(kernel, dtype=np.float32)) + np.array(bias, dtype=np.float32)
++                        flat_output = np.array(linear_output, dtype=np.float32).flatten()
++                        if flat_output.size > 0:
++                            qt_out = QuantizedTypeConverter(bits=8, symetric=True, signed=True)
++                            qt_out.fit(flat_output)
++                            output_qp = qt_out.export_params(mode='q15')
++                except Exception:
++                    output_qp = None
++
++            if output_qp is None:
++                output_qp = getattr(self, 'output_qp', None)
++
++            if output_qp is None:
++                output_qp = params
++
++            # Convert float biases -> int32 accumulator units if input_qp is available
++            input_qp = getattr(self, 'input_qp', None)
++            if input_qp is not None:
++                try:
++                    Q_SCALE = float(1 << 15)
++                    input_scale = float(input_qp.scale_q) / Q_SCALE
++                    weight_scale = float(params.scale_q) / Q_SCALE
++                    acc_scale = input_scale * weight_scale
++                    conv_biases = np.round(biases / acc_scale).astype(np.int32)
++                except Exception:
++                    biases_type = 'float'
++                    conv_biases = np.asarray(biases, dtype=np.float32)
++            else:
++                # fallback: keep float biases
++                biases_type = 'float'
++                conv_biases = np.asarray(biases, dtype=np.float32)
++
++            qparams = f', {{ {params.scale_q}, {params.zero_point} }}, {{ {output_qp.scale_q}, {output_qp.zero_point} }}'
++        elif self.options.data_type == ModelDataType.QUANT8:
++            biases_type = weight_type
++            conv_biases = weight_converter.transform(biases)
+             params = weight_converter.export_params(mode='q15')
+-            qparams = f', {{ {params.scale_q}, {params.zero_point} }}'
++            qparams = f', {{ {params.scale_q}, {params.zero_point} }}, {{ {params.scale_q}, {params.zero_point} }}'
+         else:
+             (biases_type, biases_converter) = self.model.get_type_converter()
+             conv_biases = biases_converter.transform(biases)
+@@ -244,13 +296,12 @@ class Dense(NeuralNetLayer):
+ 
+             cb.add()
+ 
+-            # --- layer struct ---
+             cb.add_struct(
+                 f'static EMBEDIA_MODEL_STORAGE {self.struct_data_type}',
+                 'layer',
+                 [
+                     f'{n_input}, {n_neurons}',  # input features, neurons
+-                    f'weights, biases{qparams}'  # data pointers + optional qparams
++                    f'weights, biases{qparams}'  # data pointers + weights/output qparams
+                 ]
+             )
+ 
+diff --git a/embedia/libraries/model/model.c b/embedia/libraries/model/model.c
+index 39108dd..49e614c 100644
+--- a/embedia/libraries/model/model.c
++++ b/embedia/libraries/model/model.c
+@@ -1,32 +1,43 @@
+-{includes}
++/* Ensure common definitions are available first */
++{
++    includes
++}
++
+ // Initialization function prototypes
+-{prototypes_init}
++{
++    prototypes_init
++}
+ 
+ // Global Variables
+-{var}
+-
+-void model_init(){{
+-{init}
+-}}
+-
+-void model_predict({input_data_type} input, {output_data_type} * output){{
+-  
+-{predict}
+-
+-    *output = {output_name};
+-
+-}}
+-
+-int model_predict_class({input_data_type} input, {output_data_type} * results){{
+-  
+-   
++{
++    var
++}
++
++void model_init()
++{
++    {
++        init
++    }
++}
++
++void model_predict({input_data_type} input, {output_data_type} * output)
++{
++    {predict}
++        *output = {output_name};
++}
++
++int model_predict_class({input_data_type} input, {output_data_type} * results)
++{
+     model_predict(input, results);
+-    
+-    {predict_class}
+-    //return argmax(data1d_t);
+ 
+-}}
++    {
++        predict_class
++    }
++    // return argmax(data1d_t);
++}
+ 
+ // Implementation of initialization functions
+ 
+-{functions_init}
++{
++    functions_init
++}
+diff --git a/embedia/model_generator/generate_files.py b/embedia/model_generator/generate_files.py
+index 866ecf8..4023347 100644
+--- a/embedia/model_generator/generate_files.py
++++ b/embedia/model_generator/generate_files.py
+@@ -193,6 +193,65 @@ def generate_embedia_model(model, src_folder, dst_folder, ext_h, ext_c, model_na
+ 
+     embedia_layers = model.embedia_layers
+ 
++    # If FULL_QUANT8 and example data provided, run a quick calibration pass to compute
++    # per-layer output quantization params (scale_q, zero_point) so generated code
++    # initializes layer->output_qparam correctly.
++    if options.data_type == ModelDataType.FULL_QUANT8 and getattr(options, 'example_data', None) is not None:
++        try:
++            import numpy as _np
++            from embedia.core.type_converters import QuantizedTypeConverter
++            # Collect Keras layer outputs for layers that expose a Keras tensor
++            # (this includes dense layers and standalone Activation layers). This
++            # allows calibration to compute correct output qparams for
++            # post-activation values (important for nonlinear activations
++            # such as tanh/sigmoid/softmax).
++            keras_model = model.model
++            keras_targets = []
++            layer_map = []
++            for ly in embedia_layers:
++                target = getattr(ly, 'wrapper', None)
++                if target is None:
++                    continue
++                target_obj = getattr(target, '_target', None)
++                # Fallback: some wrappers may not expose _target; try locating
++                # the corresponding Keras layer by name in the keras model.
++                if target_obj is None:
++                    try:
++                        target_obj = keras_model.get_layer(getattr(target, 'name', None))
++                    except Exception:
++                        target_obj = None
++
++                if target_obj is not None and hasattr(target_obj, 'output'):
++                    # record which layer we're calibrating for diagnostics
++                    try:
++                        print(f"Calibrating output qparams for layer: {ly.name}")
++                    except Exception:
++                        pass
++                    keras_targets.append(target_obj.output)
++                    layer_map.append(ly)
++
++            if len(keras_targets) > 0:
++                from tensorflow.keras.models import Model as _KModel
++                calib_model = _KModel(inputs=keras_model.inputs, outputs=keras_targets)
++                # run on provided example_data (numpy array of floats)
++                example_X = options.example_data
++                if example_X is not None and len(example_X) > 0:
++                    preds = calib_model.predict(example_X, verbose=0)
++                    # preds can be a single array or list
++                    if not isinstance(preds, list):
++                        preds = [preds]
++                    for ly, out in zip(layer_map, preds):
++                        # flatten outputs and compute quant params
++                        qt = QuantizedTypeConverter(bits=8, symetric=True, signed=True)
++                        flat = _np.array(out).astype(_np.float32).flatten()
++                        qt.fit(flat)
++                        qp = qt.export_params(mode='q15')
++                        # store on embedia layer for later use in codegen
++                        setattr(ly, 'output_qp', qp)
++        except Exception:
++            # calibration is best-effort; don't fail generation on calibration errors
++            pass
++
+     model_filename = format_model_name(model_name)
+ 
+     src_h = os.path.join(src_folder, 'model/model.h')
+@@ -232,7 +291,32 @@ def generate_embedia_model(model, src_folder, dst_folder, ext_h, ext_c, model_na
+     layer_id = -1
+     first_layer = True
+ 
++    current_qp = None
++    if options.data_type == ModelDataType.FULL_QUANT8 and getattr(options, 'example_data', None) is not None:
++        try:
++            from embedia.core.type_converters import QuantizedTypeConverter
++
++            example_values = np.array(options.example_data, dtype=np.float32).flatten()
++            if example_values.size > 0:
++                input_qt = QuantizedTypeConverter(bits=8, symetric=False, signed=True)
++                input_qt.fit(example_values)
++                current_qp = input_qt.export_params(mode='q15')
++        except Exception:
++            current_qp = None
++
+     for layer in embedia_layers:
++        if current_qp is not None:
++            setattr(layer, 'input_qp', current_qp)
++
++        # Debug: show qparam propagation for FULL_QUANT8
++        try:
++            if options.data_type == ModelDataType.FULL_QUANT8:
++                inp = getattr(layer, 'input_qp', None)
++                outp = getattr(layer, 'output_qp', None)
++                print(f"Generate layer {layer.name}: input_qp={inp}, output_qp={outp}")
++        except Exception:
++            pass
++
+         # includes files of function prototype and implementation
+         files_list = layer.required_files
+         for (header_file, code_file) in files_list:
+@@ -260,6 +344,11 @@ def generate_embedia_model(model, src_folder, dst_folder, ext_h, ext_c, model_na
+                     data_init += layer.variable_initialization  # variable initialization via data init function
+                     func_impl += layer.function_implementation  # data init function implementation
+ 
++                if options.data_type == ModelDataType.FULL_QUANT8:
++                    layer_output_qp = getattr(layer, 'output_qp', None)
++                    if layer_output_qp is not None:
++                        current_qp = layer_output_qp
++
+                 input_layer_type = layer.input_data_type
+                 output_layer_type = layer.output_data_type
+ 
+@@ -317,7 +406,8 @@ def generate_embedia_model(model, src_folder, dst_folder, ext_h, ext_c, model_na
+         if output_pred_type == OutputPredictionType.BINARY_OUTPUT:
+             predict_class = 'return results->data[0] >= 0.5;'
+         elif output_pred_type == OutputPredictionType.CLASS_PROBABILITIES:
+-            predict_class = 'return argmax(results->data, results->length);'
++            # Use argmax with data1d_t to match common.h canonical prototype
++            predict_class = 'return argmax(*results);'
+         elif output_pred_type == OutputPredictionType.DIRECT_CLASS_ID:
+             predict_class = 'return results->data[0];'
+     else:
+@@ -325,8 +415,13 @@ def generate_embedia_model(model, src_folder, dst_folder, ext_h, ext_c, model_na
+     return -1; '''
+ 
+     # prepare include files
+-    includes = ''
++    # Ensure common.h is always included first so macros like EMBEDIA_MODEL_STORAGE
++    # are defined before any model-specific headers that may use them.
++    includes = '#include "common.h"\n'
+     for filename in include_files:
++        # skip if common was already added via model header
++        if filename == 'common':
++            continue
+         includes += f'#include "{filename}.h"\n'
+ 
+     text_model_h = file_management.read_from_file(src_h).format(
+@@ -336,20 +431,26 @@ def generate_embedia_model(model, src_folder, dst_folder, ext_h, ext_c, model_na
+             input_data_type=input_data_type,
+             output_data_type=output_data_type
+         )
+-
+-    text_model_c = file_management.read_from_file(src_c).format(
+-            includes=includes,
+-            filename=model_filename,
+-            prototypes_init=prototypes_init,
+-            var=var_decl,
+-            init=data_init,
+-            predict=predict_fn,
+-            predict_class=predict_class,
+-            functions_init=func_impl,
+-            input_data_type=input_data_type,
+-            output_data_type=output_data_type,
+-            output_name=var_output
+-        )
++    # Ensure EMBEDIA_MODEL_STORAGE is defined before model data declarations
++    model_storage_define = f'#ifndef EMBEDIA_MODEL_STORAGE\n#define EMBEDIA_MODEL_STORAGE {options.model_storage.qualifier}\n#endif\n\n'
++
++    # Use safe string replacement to avoid conflicts with literal braces in C code.
++    text_model_c = file_management.read_from_file(src_c)
++    replacements = {
++        'includes': model_storage_define + includes,
++        'filename': model_filename,
++        'prototypes_init': prototypes_init,
++        'var': var_decl,
++        'init': data_init,
++        'predict': predict_fn,
++        'predict_class': predict_class,
++        'functions_init': func_impl,
++        'input_data_type': input_data_type,
++        'output_data_type': output_data_type,
++        'output_name': var_output,
++    }
++    for k, v in replacements.items():
++        text_model_c = text_model_c.replace('{' + k + '}', v)
+ 
+     file_management.save_to_file(os.path.join(dst_folder, model_filename + ext_h), text_model_h)
+     file_management.save_to_file(os.path.join(dst_folder, model_filename + ext_c), text_model_c)
+@@ -436,6 +537,8 @@ def generate_embedia_main(embedia_model, src_folder, dst_embedia_folder, model_n
+         coder.printf('------|-----|------\\n')
+         with coder.bgn('for (i=0; i<TEST_SAMPLES; i++) {'):
+             coder.append('input.data = sample_data[i];')
++            # attach the sample quantization params to the input
++            coder.append('input.qparam = sample_data_qp;')
+             coder.append('prediction = model_predict_class(input, &results);')
+             with coder.bgn('if (prediction == sample_data_ids[i][0]) {'):
+                 coder.append('ok++;')

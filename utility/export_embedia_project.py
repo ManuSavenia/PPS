@@ -7,7 +7,10 @@ import types
 import sys
 from pathlib import Path
 
-import joblib
+try:
+    import joblib
+except Exception:
+    import pickle as joblib
 import numpy as np
 import pandas as pd
 from tensorflow.keras.models import load_model
